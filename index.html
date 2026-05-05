@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Навчальний вебпрототип системи пропускного контролю в 18 корпус" />
+  <title>Система пропускного контролю в 18 корпус</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">Лабораторна робота №1 · Варіант №7</p>
+        <h1>Система пропускного контролю в 18 корпус</h1>
+        <p class="hero-text">
+          Охайний демонстраційний прототип для перевірки права доступу, ведення списку користувачів
+          та автоматичного формування журналу входів і виходів.
+        </p>
+        <div class="hero-badges" aria-label="Ключові характеристики системи">
+          <span>LocalStorage</span>
+          <span>Без серверу</span>
+          <span>CSV-експорт</span>
+        </div>
+      </div>
+
+      <div class="hero-card" aria-label="Інформація про систему">
+        <div class="hero-card-icon">18</div>
+        <p class="hero-card-title">Навчальний прототип</p>
+        <p class="hero-card-text">HTML · CSS · JavaScript</p>
+        <div class="hero-actions">
+          <button class="btn btn-light" id="seedDataBtn" type="button">Відновити демо-дані</button>
+          <button class="btn btn-danger-outline" id="clearAllBtn" type="button">Очистити все</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Основні розділи системи">
+      <button class="tab active" data-tab="dashboard" type="button">Панель</button>
+      <button class="tab" data-tab="access" type="button">Перевірка доступу</button>
+      <button class="tab" data-tab="users" type="button">Користувачі</button>
+      <button class="tab" data-tab="log" type="button">Журнал</button>
+      <button class="tab" data-tab="about" type="button">Про систему</button>
+    </nav>
+
+    <main class="content">
+      <section class="tab-panel active" id="dashboard">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Огляд</p>
+            <h2>Панель керування</h2>
+          </div>
+          <p class="section-note">Поточний стан демонстраційної бази користувачів і журналу подій.</p>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span class="stat-icon">👥</span>
+            <span class="stat-label">Усього користувачів</span>
+            <strong id="totalUsers">0</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon">✅</span>
+            <span class="stat-label">Активні пропуски</span>
+            <strong id="activeUsers">0</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon">⛔</span>
+            <span class="stat-label">Заблоковані</span>
+            <strong id="blockedUsers">0</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon">🧾</span>
+            <span class="stat-label">Подій у журналі</span>
+            <strong id="logCount">0</strong>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="card">
+            <div class="card-title-row">
+              <h3>Призначення системи</h3>
+            </div>
+            <p>
+              Система призначена для автоматизації контролю входу та виходу осіб у 18 корпус.
+              Вона дає змогу перевіряти право доступу за номером пропуску або ПІБ, вести журнал
+              подій і керувати зареєстрованими користувачами.
+            </p>
+            <div class="mini-list">
+              <span>Перевірка доступу</span>
+              <span>Облік користувачів</span>
+              <span>Журнал входів/виходів</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-title-row">
+              <h3>Останні події</h3>
+            </div>
+            <div class="table-wrap compact-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Дата і час</th>
+                    <th>Особа</th>
+                    <th>Дія</th>
+                    <th>Результат</th>
+                  </tr>
+                </thead>
+                <tbody id="recentLogTable"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="access">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Контроль</p>
+            <h2>Перевірка права доступу</h2>
+          </div>
+          <p class="section-note">Введіть номер пропуску або частину ПІБ користувача.</p>
+        </div>
+
+        <div class="grid-2">
+          <article class="card">
+            <h3>Форма перевірки</h3>
+            <form id="accessForm" class="form">
+              <label>
+                <span>Номер пропуску або ПІБ</span>
+                <input type="text" id="accessQuery" placeholder="Наприклад: ST-001 або Іваненко" required />
+              </label>
+              <label>
+                <span>Дія</span>
+                <select id="accessDirection">
+                  <option value="Вхід">Вхід</option>
+                  <option value="Вихід">Вихід</option>
+                </select>
+              </label>
+              <button type="submit" class="btn btn-primary">Перевірити доступ</button>
+            </form>
+          </article>
+
+          <article class="card result-card" id="accessResult" aria-live="polite">
+            <h3>Результат перевірки</h3>
+            <div class="empty-state">
+              <div class="empty-icon">🔎</div>
+              <p>Введіть номер пропуску або ПІБ, щоб отримати результат.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="users">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Облік</p>
+            <h2>Користувачі системи</h2>
+          </div>
+          <p class="section-note">Додавання, пошук, блокування та видалення пропусків.</p>
+        </div>
+
+        <div class="grid-2 wide-right">
+          <article class="card">
+            <h3>Додати користувача</h3>
+            <form id="userForm" class="form">
+              <label>
+                <span>ПІБ</span>
+                <input type="text" id="fullName" placeholder="Прізвище Ім'я По батькові" required />
+              </label>
+              <label>
+                <span>Номер пропуску</span>
+                <input type="text" id="passId" placeholder="Наприклад: ST-010" required />
+              </label>
+              <div class="form-row">
+                <label>
+                  <span>Категорія</span>
+                  <select id="role" required>
+                    <option value="Студент">Студент</option>
+                    <option value="Викладач">Викладач</option>
+                    <option value="Працівник">Працівник</option>
+                    <option value="Відвідувач">Відвідувач</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Статус</span>
+                  <select id="status">
+                    <option value="Активний">Активний</option>
+                    <option value="Заблокований">Заблокований</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                <span>Група / підрозділ</span>
+                <input type="text" id="department" placeholder="Наприклад: аІК-43 або кафедра" />
+              </label>
+              <label>
+                <span>Термін дії до</span>
+                <input type="date" id="validUntil" />
+              </label>
+              <label>
+                <span>Примітка</span>
+                <textarea id="note" placeholder="Додаткова інформація"></textarea>
+              </label>
+              <button type="submit" class="btn btn-primary">Зберегти користувача</button>
+            </form>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Список користувачів</h3>
+              <input type="search" id="userSearch" placeholder="Пошук за ПІБ, пропуском або категорією..." />
+            </div>
+            <div class="table-wrap users-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ПІБ</th>
+                    <th>Пропуск</th>
+                    <th>Категорія</th>
+                    <th>Статус</th>
+                    <th>Дії</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTable"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="log">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Журнал</p>
+            <h2>Входи та виходи</h2>
+          </div>
+          <p class="section-note">Усі перевірки автоматично додаються до журналу подій.</p>
+        </div>
+
+        <article class="card">
+          <div class="card-header">
+            <h3>Журнал входів і виходів</h3>
+            <div class="button-row">
+              <button class="btn btn-secondary" id="exportCsvBtn" type="button">Експорт CSV</button>
+              <button class="btn btn-danger" id="clearLogBtn" type="button">Очистити журнал</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Дата і час</th>
+                  <th>ПІБ</th>
+                  <th>Пропуск</th>
+                  <th>Дія</th>
+                  <th>Результат</th>
+                  <th>Причина</th>
+                </tr>
+              </thead>
+              <tbody id="logTable"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="tab-panel" id="about">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Опис</p>
+            <h2>Про прототип</h2>
+          </div>
+          <p class="section-note">Короткий опис призначення, вимог і складу проєкту.</p>
+        </div>
+
+        <article class="card prose-card">
+          <h3>Навчальне призначення</h3>
+          <p>
+            Цей прототип створено для демонстрації вимог, описаних у лабораторній роботі №1.
+            Він не потребує серверної частини та працює без встановлення додаткових програм.
+          </p>
+
+          <h3>Реалізовані функції</h3>
+          <ul class="feature-list">
+            <li>перевірка доступу за номером пропуску або ПІБ;</li>
+            <li>додавання, блокування та видалення користувачів;</li>
+            <li>автоматичне ведення журналу входів і виходів;</li>
+            <li>збереження даних у LocalStorage браузера;</li>
+            <li>експорт журналу у форматі CSV.</li>
+          </ul>
+
+          <div class="info-panel">
+            <strong>Запуск:</strong> розпакуйте архів і відкрийте файл <code>index.html</code> у браузері.
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>Навчальний вебпрототип</span>
+      <span>Лабораторна робота №1 · Виявлення та характеристика вимог до ПП</span>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
